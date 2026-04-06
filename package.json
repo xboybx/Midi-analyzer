@@ -1,15 +1,20 @@
 {
-  "name": "next-app",
-  "version": "0.1.0",
+  "name": "midi-chord-finder",
+  "version": "1.0.0",
   "private": true,
+  "description": "Real-time MIDI chord detection with piano, guitar fretboard, and grand staff notation",
+  "author": "jeswa",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "electron:dev": "concurrently -n NEXT,ELECTRON -c cyan,yellow \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "next build && electron-builder",
+    "electron:pack": "electron-builder --dir"
   },
   "dependencies": {
-    "@tonejs/piano": "^0.2.1",
     "next": "16.2.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -20,8 +25,40 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^36.1.0",
+    "electron-builder": "^26.0.12",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.jeswa.midi-chord-finder",
+    "productName": "MIDI Chord Finder",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*",
+      "electron/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "icon": "public/512.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "public/512.png",
+      "uninstallerIcon": "public/512.png",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }

@@ -13,17 +13,15 @@ type AudioState = "idle" | "loading" | "loaded" | "error";
 
 export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [isSoundPickerOpen, setIsSoundPickerOpen] = useState(false);
   const [audioState, setAudioState] = useState<AudioState>("idle");
   const [audioError, setAudioError] = useState<string | null>(null);
   const [selectedSound, setSelectedSound] = useState<PianoSoundId>("grand");
-  const [pendingSound, setPendingSound] = useState<PianoSoundId>("grand"); // in-modal selection
-  const optionsRef = useRef<HTMLDivElement>(null);
+  const [pendingSound, setPendingSound] = useState<PianoSoundId>("grand");
+  const soundPickerRef = useRef<HTMLDivElement>(null);
 
-  // Register global cleanup on tab close / visibility change
   useAppCleanup();
 
-  // Wire audio engine callbacks into the MIDI hook
   const midiCallbacks = {
     onNoteOn: useCallback((midi: number, velocity: number) => {
       audioEngine.noteOn(midi, velocity);
@@ -55,11 +53,11 @@ export default function Home() {
     }
   };
 
-  // Close Options dropdown when clicking outside
+  // Close sound picker when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
-        setIsOptionsOpen(false);
+      if (soundPickerRef.current && !soundPickerRef.current.contains(e.target as Node)) {
+        setIsSoundPickerOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
@@ -84,46 +82,49 @@ export default function Home() {
         </div>
 
         <div className="header-controls">
-          {/* 🔊 Enable Sound / Loading / Error */}
+          {/* 🔊 Enable / Loading / Error */}
           {audioState === "idle" && (
             <button className="enable-audio-btn" onClick={() => loadSound(selectedSound)}>
               🔊 Enable Sound
             </button>
           )}
           {audioState === "loading" && (
-            <span className="audio-loading-badge"> Loading... {currentSoundLabel}…</span>
+            <span className="audio-loading-badge">⌛ Loading {currentSoundLabel}…</span>
           )}
+
+          {/* The green badge IS the sound picker — click to switch */}
           {audioState === "loaded" && (
-            <span className="audio-active-badge"> {currentSoundLabel}</span>
+            <div className="sound-picker-wrap" ref={soundPickerRef}>
+              <button
+                className="audio-active-badge clickable"
+                onClick={() => setIsSoundPickerOpen(v => !v)}
+                title="Click to switch instrument"
+              >
+                🎹 {currentSoundLabel} ▾
+              </button>
+              {isSoundPickerOpen && (
+                <div className="options-menu">
+                  <div className="options-section-title">Switch Instrument</div>
+                  {PIANO_SOUNDS.map(sound => (
+                    <button
+                      key={sound.id}
+                      className={`options-item ${selectedSound === sound.id ? "active" : ""}`}
+                      onClick={() => { loadSound(sound.id); setIsSoundPickerOpen(false); }}
+                    >
+                      <strong>{sound.label}</strong>
+                      <span>{sound.description}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
+
           {audioState === "error" && (
             <button className="enable-audio-btn error" onClick={() => loadSound(selectedSound)} title={audioError ?? ""}>
               ⚠ Retry Sound
             </button>
           )}
-
-          {/* Options dropdown */}
-          <div className="options-dropdown" ref={optionsRef}>
-            <button className="header-link-btn" onClick={() => setIsOptionsOpen(v => !v)}>
-              Options ▾
-            </button>
-            {isOptionsOpen && (
-              <div className="options-menu">
-                <div className="options-section-title">Piano Sound</div>
-                {PIANO_SOUNDS.map(sound => (
-                  <button
-                    key={sound.id}
-                    className={`options-item ${selectedSound === sound.id ? "active" : ""}`}
-                    onClick={() => { loadSound(sound.id); setIsOptionsOpen(false); }}
-                    disabled={audioState === "loading"}
-                  >
-                    <strong>{sound.label}</strong>
-                    <span>{sound.description}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           <button className="settings-btn" onClick={() => { setIsSettingsOpen(true); setPendingSound(selectedSound); }}>
             ⚙️
