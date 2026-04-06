@@ -1,66 +1,243 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useMidi } from "@/lib/midi";
+import { detectChord } from "@/lib/chord_detector";
+import { audioEngine, PIANO_SOUNDS, type PianoSoundId } from "@/lib/audio_engine";
+import { useAppCleanup } from "@/lib/use_app_cleanup";
+import Piano from "@/components/Piano";
+import Fretboard from "@/components/Fretboard";
+import SheetMusic from "@/components/SheetMusic";
+
+type AudioState = "idle" | "loading" | "loaded" | "error";
 
 export default function Home() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [audioState, setAudioState] = useState<AudioState>("idle");
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [selectedSound, setSelectedSound] = useState<PianoSoundId>("grand");
+  const [pendingSound, setPendingSound] = useState<PianoSoundId>("grand"); // in-modal selection
+  const optionsRef = useRef<HTMLDivElement>(null);
+
+  // Register global cleanup on tab close / visibility change
+  useAppCleanup();
+
+  // Wire audio engine callbacks into the MIDI hook
+  const midiCallbacks = {
+    onNoteOn: useCallback((midi: number, velocity: number) => {
+      audioEngine.noteOn(midi, velocity);
+    }, []),
+    onNoteOff: useCallback((midi: number) => {
+      audioEngine.noteOff(midi);
+    }, []),
+    onSustain: useCallback((active: boolean) => {
+      audioEngine.setPedal(active);
+    }, []),
+  };
+
+  const { activeNotes, devices, error: midiError, sustainActive } = useMidi(midiCallbacks);
+  const currentChord = detectChord(activeNotes);
+  const deviceNames = devices.length > 0 ? devices.join(", ") : null;
+
+  const loadSound = async (soundId: PianoSoundId) => {
+    setAudioState("loading");
+    setAudioError(null);
+    audioEngine.releaseAll();
+
+    const result = await audioEngine.init(soundId);
+    if (result.success) {
+      setAudioState("loaded");
+      setSelectedSound(soundId);
+    } else {
+      setAudioState("error");
+      setAudioError(result.error ?? "Unknown error loading samples.");
+    }
+  };
+
+  // Close Options dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (optionsRef.current && !optionsRef.current.contains(e.target as Node)) {
+        setIsOptionsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const currentSoundLabel = PIANO_SOUNDS.find(s => s.id === selectedSound)?.label ?? "Grand Piano";
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="app-container">
+      {/* ─── HEADER ─── */}
+      <header className="top-header">
+        <div className="device-info">
+          <span className="device-label">MIDI:</span>
+          {midiError ? (
+            <span className="header-error-badge">⚠ {midiError}</span>
+          ) : deviceNames ? (
+            <span className="device-name">{deviceNames}</span>
+          ) : (
+            <span className="device-none">No device detected</span>
+          )}
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="header-controls">
+          {/* 🔊 Enable Sound / Loading / Error */}
+          {audioState === "idle" && (
+            <button className="enable-audio-btn" onClick={() => loadSound(selectedSound)}>
+              🔊 Enable Sound
+            </button>
+          )}
+          {audioState === "loading" && (
+            <span className="audio-loading-badge"> Loading... {currentSoundLabel}…</span>
+          )}
+          {audioState === "loaded" && (
+            <span className="audio-active-badge"> {currentSoundLabel}</span>
+          )}
+          {audioState === "error" && (
+            <button className="enable-audio-btn error" onClick={() => loadSound(selectedSound)} title={audioError ?? ""}>
+              ⚠ Retry Sound
+            </button>
+          )}
+
+          {/* Options dropdown */}
+          <div className="options-dropdown" ref={optionsRef}>
+            <button className="header-link-btn" onClick={() => setIsOptionsOpen(v => !v)}>
+              Options ▾
+            </button>
+            {isOptionsOpen && (
+              <div className="options-menu">
+                <div className="options-section-title">Piano Sound</div>
+                {PIANO_SOUNDS.map(sound => (
+                  <button
+                    key={sound.id}
+                    className={`options-item ${selectedSound === sound.id ? "active" : ""}`}
+                    onClick={() => { loadSound(sound.id); setIsOptionsOpen(false); }}
+                    disabled={audioState === "loading"}
+                  >
+                    <strong>{sound.label}</strong>
+                    <span>{sound.description}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <button className="settings-btn" onClick={() => { setIsSettingsOpen(true); setPendingSound(selectedSound); }}>
+            ⚙️
+          </button>
         </div>
-      </main>
+      </header>
+
+      {/* ─── MAIN CONTENT ─── */}
+      <div className="content-pane">
+        <div className="sheet-music-pane">
+          <h3 className="key-indicator">Key: C</h3>
+          <SheetMusic activeNotes={activeNotes} />
+          <div className="sustain-indicator">
+            <div className={`status-dot ${sustainActive ? "active" : ""}`} />
+            <span className={sustainActive ? "sustain-on" : ""}>Sustain</span>
+          </div>
+        </div>
+
+        <div className="fretboard-pane">
+          <div className="chord-display-area">
+            {currentChord ? (
+              <>
+                <div className="main-chord-text">{currentChord.primary}</div>
+                <div className="alt-chord-text">
+                  {currentChord.alternates.map((alt, i) => <div key={i}>{alt}</div>)}
+                </div>
+              </>
+            ) : (
+              <div className="main-chord-text chord-placeholder">READY</div>
+            )}
+          </div>
+          <Fretboard activeNotes={activeNotes} />
+        </div>
+      </div>
+
+      {/* ─── PIANO ─── */}
+      <div className="piano-wrapper">
+        <div className="support-indicator">
+          <span className={`status-dot ${devices.length > 0 ? "active" : ""}`} />
+          <span>Support/Midi</span>
+          {audioState === "error" && (
+            <span className="piano-audio-error" title={audioError ?? ""}>· ⚠ Audio failed</span>
+          )}
+        </div>
+        <Piano activeNotes={activeNotes} />
+      </div>
+
+      {/* ─── SETTINGS MODAL ─── */}
+      {isSettingsOpen && (
+        <div className="modal-overlay" onClick={() => setIsSettingsOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Settings</h2>
+              <button className="close-btn" onClick={() => setIsSettingsOpen(false)}>×</button>
+            </div>
+
+            {/* Audio Engine Status */}
+            <div className="settings-status-row">
+              <span className="settings-label">Audio Engine</span>
+              <span className={`settings-value ${audioState === "loaded" ? "ok" : audioState === "error" ? "err" : ""}`}>
+                {audioState === "loaded" ? `✓ Active — ${currentSoundLabel}` : audioState === "loading" ? "Loading…" : audioState === "error" ? `✗ ${audioError}` : "Inactive"}
+              </span>
+            </div>
+
+            {/* Piano Sound Selection */}
+            <div className="settings-section">
+              <label className="settings-section-title">Piano Sound</label>
+              <div className="piano-sound-grid">
+                {PIANO_SOUNDS.map(sound => (
+                  <button
+                    key={sound.id}
+                    className={`piano-sound-card ${pendingSound === sound.id ? "selected" : ""}`}
+                    onClick={() => setPendingSound(sound.id)}
+                  >
+                    <span className="sound-card-name">{sound.label}</span>
+                    <span className="sound-card-desc">{sound.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Future: Sheet Clef */}
+            <div className="settings-section">
+              <label className="settings-section-title">Sheet Clef <span className="coming-soon">coming soon</span></label>
+              <select className="settings-select" disabled>
+                <option>Grand Staff</option>
+                <option>Treble Only</option>
+                <option>Bass Only</option>
+              </select>
+            </div>
+
+            {/* Future: Piano Range */}
+            <div className="settings-section">
+              <label className="settings-section-title">Piano Range <span className="coming-soon">coming soon</span></label>
+              <select className="settings-select" disabled>
+                <option>99 Keys</option>
+                <option>88 Keys</option>
+                <option>61 Keys</option>
+              </select>
+            </div>
+
+            <div className="modal-footer">
+              <button className="modal-cancel-btn" onClick={() => setIsSettingsOpen(false)}>Cancel</button>
+              <button
+                className="modal-apply-btn"
+                onClick={() => { loadSound(pendingSound); setIsSettingsOpen(false); }}
+                disabled={audioState === "loading"}
+              >
+                {pendingSound !== selectedSound ? "Apply & Load Sound" : "Close"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

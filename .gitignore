@@ -39,3 +39,41 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ─── Electron ───────────────────────────────
+# electron-builder output directories
+/dist/
+/release/
+/dist-electron/
+
+# Electron packaged app caches
+/electron/out/
+*.app
+*.exe
+*.dmg
+*.AppImage
+*.deb
+*.snap
+*.rpm
+*.zip
+*.tar.gz
+
+# electron-builder lock
+electron-builder.lock
+
+# ─── App-specific ───────────────────────────
+# Audio sample cache (downloaded at runtime)
+/public/samples/
+
+# OS artefacts
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Editor / IDE
+.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
