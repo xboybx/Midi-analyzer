@@ -70,6 +70,11 @@ export default function Home() {
     <div className="app-container">
       {/* ─── HEADER ─── */}
       <header className="top-header">
+        <div className="logo-section">
+          <img src="/126.png" alt="Logo" className="logo-image" />
+          <h1 className="app-title">Chord Analyzer</h1>
+        </div>
+
         <div className="device-info">
           <span className="device-label">MIDI:</span>
           {midiError ? (
