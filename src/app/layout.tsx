@@ -16,9 +16,16 @@ export const metadata: Metadata = {
   title: "Chord Analyzer",
   description: "Midi detector and Chord analyzer",
   icons: {
-    icon: "/126.png",
-    apple: "/512.png",
+    icon: [
+      { url: "/128.png", sizes: "128x128" },
+      { url: "/256.png", sizes: "256x256" },
+      { url: "/512.png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/512.png", sizes: "512x512" },
+    ],
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
