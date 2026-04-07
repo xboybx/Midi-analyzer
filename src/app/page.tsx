@@ -71,7 +71,7 @@ export default function Home() {
       {/* ─── HEADER ─── */}
       <header className="top-header">
         <div className="logo-section">
-          <img src="/126.png" alt="Logo" className="logo-image" />
+          <img src="/128.png" alt="Logo" className="logo-image" />
           <h1 className="app-title">Chord Analyzer</h1>
         </div>
 
