@@ -7,19 +7,19 @@ const isDev = !app.isPackaged;
 
 function createWindow() {
   const win = new BrowserWindow({
-    width:     1440,
-    height:    860,
-    minWidth:  1024,
+    width: 1440,
+    height: 860,
+    minWidth: 1024,
     minHeight: 640,
-    title:     'MIDI Chord Finder',
-    icon:      path.join(__dirname, '../public/256.png'),
+    title: 'MIDI Chord Finder',
+    icon: path.join(__dirname, '../public/256.png'),
     backgroundColor: '#ffffff',
     show: false,  // prevent white flash before content loads
     webPreferences: {
-      preload:          path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration:  false,
-      sandbox:          true,
+      nodeIntegration: false,
+      sandbox: true,
     },
   });
 

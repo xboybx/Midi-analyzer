@@ -15,9 +15,14 @@
   --font: 'Quicksand', 'Century Gothic', sans-serif;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html, body {
+html,
+body {
   background: var(--bg);
   color: var(--text-primary);
   font-family: var(--font);
@@ -76,9 +81,23 @@ html, body {
   overflow: hidden;
 }
 
-.device-label { font-weight: 700; color: var(--text-secondary); flex-shrink: 0; }
-.device-name  { color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.device-none  { color: var(--text-muted); font-style: italic; }
+.device-label {
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.device-name {
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.device-none {
+  color: var(--text-muted);
+  font-style: italic;
+}
 
 .header-error-badge {
   font-size: 0.78rem;
@@ -109,8 +128,14 @@ html, body {
   transition: opacity 0.2s;
   font-family: var(--font);
 }
-.enable-audio-btn:hover { opacity: 0.85; }
-.enable-audio-btn.error { background: var(--chordie-red); }
+
+.enable-audio-btn:hover {
+  opacity: 0.85;
+}
+
+.enable-audio-btn.error {
+  background: var(--chordie-red);
+}
 
 .audio-loading-badge {
   font-size: 0.8rem;
@@ -118,7 +143,18 @@ html, body {
   font-weight: 500;
   animation: pulse 1.2s infinite;
 }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1
+  }
+
+  50% {
+    opacity: 0.5
+  }
+}
 
 .audio-active-badge {
   font-size: 0.8rem;
@@ -136,6 +172,7 @@ html, body {
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .audio-active-badge.clickable:hover {
   background: #c8e6c9;
 }
@@ -144,6 +181,7 @@ html, body {
 .sound-picker-wrap {
   position: relative;
 }
+
 .sound-picker-wrap .options-menu {
   right: 0;
   top: calc(100% + 6px);
@@ -159,7 +197,10 @@ html, body {
   transition: background 0.2s;
   line-height: 1;
 }
-.settings-btn:hover { background: var(--surface); }
+
+.settings-btn:hover {
+  background: var(--surface);
+}
 
 .header-link-btn {
   background: none;
@@ -173,10 +214,16 @@ html, body {
   font-family: var(--font);
   transition: background 0.15s;
 }
-.header-link-btn:hover { background: var(--surface); color: var(--text-primary); }
+
+.header-link-btn:hover {
+  background: var(--surface);
+  color: var(--text-primary);
+}
 
 /* ─────────── OPTIONS DROPDOWN ─────────── */
-.options-dropdown { position: relative; }
+.options-dropdown {
+  position: relative;
+}
 
 .options-menu {
   position: absolute;
@@ -185,7 +232,7 @@ html, body {
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   width: 230px;
   z-index: 500;
   overflow: hidden;
@@ -215,12 +262,33 @@ html, body {
   gap: 2px;
   border-top: 1px solid var(--border);
 }
-.options-item strong { font-size: 0.85rem; color: var(--text-primary); }
-.options-item span   { font-size: 0.75rem; color: var(--text-muted); }
-.options-item:hover  { background: var(--surface); }
-.options-item.active { background: #eff4ff; }
-.options-item.active strong { color: var(--accent); }
-.options-item:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.options-item strong {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.options-item span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.options-item:hover {
+  background: var(--surface);
+}
+
+.options-item.active {
+  background: #eff4ff;
+}
+
+.options-item.active strong {
+  color: var(--accent);
+}
+
+.options-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* ─────────── CONTENT PANE ─────────── */
 .content-pane {
@@ -228,7 +296,8 @@ html, body {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  padding: 16px 40px 0 8%;  /* 8% left margin + generous right gives balanced centering */
+  padding: 16px 40px 0 8%;
+  /* 8% left margin + generous right gives balanced centering */
   min-height: 0;
   gap: 5%;
 }
@@ -255,8 +324,16 @@ html, body {
   margin-top: 16px;
   margin-left: 20px;
 }
-.sustain-indicator span { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; }
-.sustain-indicator span.sustain-on { color: var(--green); }
+
+.sustain-indicator span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.sustain-indicator span.sustain-on {
+  color: var(--green);
+}
 
 .status-dot {
   width: 10px;
@@ -266,7 +343,11 @@ html, body {
   flex-shrink: 0;
   transition: background 0.2s;
 }
-.status-dot.active { background: var(--green); box-shadow: 0 0 6px rgba(67,160,71,0.6); }
+
+.status-dot.active {
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(67, 160, 71, 0.6);
+}
 
 .fretboard-pane {
   display: flex;
@@ -290,7 +371,10 @@ html, body {
   line-height: 1;
   letter-spacing: 1px;
 }
-.chord-placeholder { opacity: 0.08; }
+
+.chord-placeholder {
+  opacity: 0.08;
+}
 
 .alt-chord-text {
   font-size: 0.95rem;
@@ -334,7 +418,10 @@ html, body {
   overflow: hidden;
 }
 
-.piano-key { display: flex; position: relative; }
+.piano-key {
+  display: flex;
+  position: relative;
+}
 
 .white-key {
   flex: 1;
@@ -391,7 +478,10 @@ html, body {
 }
 
 /* ─────────── FRETBOARD ─────────── */
-.fretboard-container { display: flex; flex-direction: row; }
+.fretboard-container {
+  display: flex;
+  flex-direction: row;
+}
 
 .string-labels {
   display: flex;
@@ -402,7 +492,12 @@ html, body {
   font-size: 0.85rem;
 }
 
-.fret-string { display: flex; height: 28px; position: relative; }
+.fret-string {
+  display: flex;
+  height: 28px;
+  position: relative;
+}
+
 .fret-string::before {
   content: "";
   position: absolute;
@@ -412,17 +507,29 @@ html, body {
   background: #333;
   z-index: 1;
 }
-.fret-string.active-string::before { background: var(--chordie-red); height: 3px; }
 
-.fret-slot { width: 34px; border-right: 2px solid #555; position: relative; }
-.nut { border-left: 6px solid #222; }
+.fret-string.active-string::before {
+  background: var(--chordie-red);
+  height: 3px;
+}
+
+.fret-slot {
+  width: 34px;
+  border-right: 2px solid #555;
+  position: relative;
+}
+
+.nut {
+  border-left: 6px solid #222;
+}
 
 .fret-marker {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 9px; height: 9px;
+  width: 9px;
+  height: 9px;
   background: #ccc;
   border: 1px solid #bbb;
   border-radius: 50%;
@@ -431,9 +538,11 @@ html, body {
 
 .fret-note {
   position: absolute;
-  top: 50%; left: 50%;
+  top: 50%;
+  left: 50%;
   transform: translate(-50%, -50%);
-  width: 22px; height: 22px;
+  width: 22px;
+  height: 22px;
   background: var(--chordie-blue);
   border-radius: 50%;
   z-index: 10;
@@ -444,14 +553,24 @@ html, body {
   font-weight: 700;
 }
 
-.fret-numbers { display: flex; margin-left: 28px; }
-.fret-num { width: 34px; text-align: center; font-size: 0.68rem; color: var(--text-muted); padding-top: 4px; }
+.fret-numbers {
+  display: flex;
+  margin-left: 28px;
+}
+
+.fret-num {
+  width: 34px;
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  padding-top: 4px;
+}
 
 /* ─────────── MODAL ─────────── */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -465,7 +584,7 @@ html, body {
   width: 440px;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
   padding: 28px;
   display: flex;
   flex-direction: column;
@@ -479,7 +598,11 @@ html, body {
   padding-bottom: 14px;
   border-bottom: 1px solid var(--border);
 }
-.modal-header h2 { font-size: 1.2rem; font-weight: 600; }
+
+.modal-header h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
 
 .close-btn {
   background: none;
@@ -491,7 +614,10 @@ html, body {
   padding: 0 4px;
   transition: color 0.15s;
 }
-.close-btn:hover { color: var(--text-primary); }
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
 
 .settings-status-row {
   display: flex;
@@ -503,12 +629,28 @@ html, body {
   font-size: 0.85rem;
   border: 1px solid var(--border);
 }
-.settings-label { font-weight: 600; }
-.settings-value { color: var(--text-muted); }
-.settings-value.ok  { color: var(--green); }
-.settings-value.err { color: var(--chordie-red); }
 
-.settings-section { display: flex; flex-direction: column; gap: 10px; }
+.settings-label {
+  font-weight: 600;
+}
+
+.settings-value {
+  color: var(--text-muted);
+}
+
+.settings-value.ok {
+  color: var(--green);
+}
+
+.settings-value.err {
+  color: var(--chordie-red);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
 .settings-section-title {
   font-size: 0.8rem;
@@ -559,12 +701,31 @@ html, body {
   transition: border-color 0.15s, background 0.15s;
   font-family: var(--font);
 }
-.piano-sound-card:hover { border-color: var(--accent); background: #eff4ff; }
-.piano-sound-card.selected { border-color: var(--accent); background: #eff4ff; }
 
-.sound-card-name { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); }
-.sound-card-desc { font-size: 0.72rem; color: var(--text-muted); }
-.piano-sound-card.selected .sound-card-name { color: var(--accent); }
+.piano-sound-card:hover {
+  border-color: var(--accent);
+  background: #eff4ff;
+}
+
+.piano-sound-card.selected {
+  border-color: var(--accent);
+  background: #eff4ff;
+}
+
+.sound-card-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sound-card-desc {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.piano-sound-card.selected .sound-card-name {
+  color: var(--accent);
+}
 
 .modal-footer {
   display: flex;
@@ -585,7 +746,10 @@ html, body {
   color: var(--text-secondary);
   transition: background 0.15s;
 }
-.modal-cancel-btn:hover { background: var(--surface); }
+
+.modal-cancel-btn:hover {
+  background: var(--surface);
+}
 
 .modal-apply-btn {
   flex: 2;
@@ -600,5 +764,12 @@ html, body {
   cursor: pointer;
   transition: opacity 0.15s;
 }
-.modal-apply-btn:hover:not(:disabled) { opacity: 0.88; }
-.modal-apply-btn:disabled { background: #bbb; cursor: not-allowed; }
+
+.modal-apply-btn:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.modal-apply-btn:disabled {
+  background: #bbb;
+  cursor: not-allowed;
+}

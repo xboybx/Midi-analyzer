@@ -61,42 +61,42 @@ export const PIANO_SOUNDS: PianoSoundOption[] = [
 
 interface InstrumentConfig {
   // Sampler playback
-  samplerAttack:  number;  // fade-in on triggerAttack (seconds)
+  samplerAttack: number;  // fade-in on triggerAttack (seconds)
   samplerRelease: number;  // fade-out on triggerRelease (seconds)
   // Sustain pedal behaviour
-  pedalRelease:   number;  // fade time when pedal is finally released
+  pedalRelease: number;  // fade time when pedal is finally released
   // Room effect
-  reverbDecay:    number;  // seconds of reverb tail (0 = none)
-  reverbWet:      number;  // 0–1 wet mix
+  reverbDecay: number;  // seconds of reverb tail (0 = none)
+  reverbWet: number;  // 0–1 wet mix
   // Output
-  volumeDb:       number;  // master gain trim
+  volumeDb: number;  // master gain trim
 }
 
 const CONFIGS: Record<PianoSoundId, InstrumentConfig> = {
   grand: {
-    samplerAttack:  0,      // true hammer-strike: no fade-in at all
+    samplerAttack: 0,      // true hammer-strike: no fade-in at all
     samplerRelease: 0.8,    // natural damper fall
-    pedalRelease:   2.0,    // strings ring very long when pedal lifts
-    reverbDecay:    2.5,    // concert-hall tail
-    reverbWet:      0.22,
-    volumeDb:       -3,
+    pedalRelease: 2.0,    // strings ring very long when pedal lifts
+    reverbDecay: 2.5,    // concert-hall tail
+    reverbWet: 0.22,
+    volumeDb: -3,
   },
   clarinet: {
-    samplerAttack:  0.02,   // breath takes a moment
+    samplerAttack: 0.02,   // breath takes a moment
     samplerRelease: 0.12,   // wind instrument cuts off quickly
-    pedalRelease:   0.25,   // sustain pedal on clarinet is barely noticeable
-    reverbDecay:    1.2,    // small room / studio
-    reverbWet:      0.15,
-    volumeDb:       -5,
+    pedalRelease: 0.25,   // sustain pedal on clarinet is barely noticeable
+    reverbDecay: 1.2,    // small room / studio
+    reverbWet: 0.15,
+    volumeDb: -5,
   },
 };
 
 // ─── Engine ─────────────────────────────────────────────────────────────────
 
 class AudioEngine {
-  private sampler:    Tone.Sampler   | null = null;
-  private reverb:     Tone.Freeverb  | null = null;  // algorithmic — zero latency
-  private masterVol:  Tone.Volume    | null = null;
+  private sampler: Tone.Sampler | null = null;
+  private reverb: Tone.Freeverb | null = null;  // algorithmic — zero latency
+  private masterVol: Tone.Volume | null = null;
 
   private isLoaded = false;
   private isLoading = false;
@@ -107,7 +107,7 @@ class AudioEngine {
   // Sustain pedal
   private isSustainDown = false;
   private sustainedNotes: Set<number> = new Set();   // notes held open by pedal
-  private activeNotes: Set<number>    = new Set();   // currently sounding notes
+  private activeNotes: Set<number> = new Set();   // currently sounding notes
 
   // ── Public API ─────────────────────────────────────────────────────────────
 
@@ -116,11 +116,11 @@ class AudioEngine {
     if (this.isLoading) return { success: false, error: "Already loading, please wait…" };
 
     this.isLoading = true;
-    this.isLoaded  = false;
+    this.isLoaded = false;
     this.loadError = null;
     this._teardown();
 
-    const sound  = PIANO_SOUNDS.find(s => s.id === soundId)!;
+    const sound = PIANO_SOUNDS.find(s => s.id === soundId)!;
     const config = CONFIGS[soundId];
 
     try {
@@ -140,7 +140,7 @@ class AudioEngine {
       // Setting lookAhead=0.01 (10 ms) keeps glitch protection while
       // removing ~90 ms of intentional delay. updateInterval must be ≤ lookAhead.
       const toneCtx = Tone.getContext() as unknown as Tone.Context;
-      toneCtx.lookAhead    = 0.01;   // 10 ms — was 100 ms
+      toneCtx.lookAhead = 0.01;   // 10 ms — was 100 ms
       toneCtx.updateInterval = 0.01; // scheduler ticks every 10 ms — was 50 ms
 
       // Build the signal chain: Sampler → Freeverb → Volume → Destination
@@ -148,9 +148,9 @@ class AudioEngine {
       // so it adds ZERO look-ahead / block latency unlike Tone.Reverb.
       this.masterVol = new Tone.Volume(config.volumeDb).toDestination();
       this.reverb = new Tone.Freeverb({
-        roomSize:  Math.min(0.9, config.reverbDecay / 3.5),  // map decay → roomSize 0–0.9
+        roomSize: Math.min(0.9, config.reverbDecay / 3.5),  // map decay → roomSize 0–0.9
         dampening: 3000,
-        wet:       config.reverbWet,
+        wet: config.reverbWet,
       });
       this.reverb.connect(this.masterVol);
 
@@ -161,17 +161,17 @@ class AudioEngine {
         }, 30_000);
 
         this.sampler = new Tone.Sampler({
-          urls:    sound.urls,
+          urls: sound.urls,
           baseUrl: sound.baseUrl,
-          attack:  config.samplerAttack,
+          attack: config.samplerAttack,
           release: config.samplerRelease,
           onload: () => {
             clearTimeout(timeout);
             this.sampler!.connect(this.reverb!);
-            this.isLoaded       = true;
-            this.isLoading      = false;
+            this.isLoaded = true;
+            this.isLoading = false;
             this.currentSoundId = soundId;
-            this.currentConfig  = config;
+            this.currentConfig = config;
             resolve({ success: true });
           },
           onerror: (err: any) => {
@@ -197,11 +197,11 @@ class AudioEngine {
 
     try {
       const note = MIDI_NOTE_CACHE[midi] ?? Tone.Frequency(midi, "midi").toNote();
-      const vel  = Math.max(0.01, Math.min(1, velocity));
+      const vel = Math.max(0.01, Math.min(1, velocity));
       // Tone.now() is correct here: after zeroing lookAhead it schedules
       // events at the current audio clock — effectively immediate.
       this.sampler!.triggerAttack(note, Tone.now(), vel);
-    } catch (_) {}
+    } catch (_) { }
   }
 
   noteOff(midi: number) {
@@ -227,14 +227,14 @@ class AudioEngine {
           const note = Tone.Frequency(midi, "midi").toNote();
           // Schedule the release slightly in the future for a smoother transition
           this.sampler!.triggerRelease(note, `+${releaseTime * 0.05}`);
-        } catch (_) {}
+        } catch (_) { }
       });
       this.sustainedNotes.clear();
     }
   }
 
   releaseAll() {
-    try { this.sampler?.releaseAll(); } catch (_) {}
+    try { this.sampler?.releaseAll(); } catch (_) { }
     this.sustainedNotes.clear();
     this.activeNotes.clear();
   }
@@ -245,20 +245,20 @@ class AudioEngine {
     try {
       const note = MIDI_NOTE_CACHE[midi] ?? Tone.Frequency(midi, "midi").toNote();
       this.sampler?.triggerRelease(note, Tone.now());
-    } catch (_) {}
+    } catch (_) { }
   }
 
   private _teardown() {
     this.releaseAll();
-    try { this.sampler?.dispose(); }   catch (_) {}
-    try { this.reverb?.dispose(); }    catch (_) {}
-    try { this.masterVol?.dispose(); } catch (_) {}
-    this.sampler    = null;
-    this.reverb     = null;
-    this.masterVol  = null;
-    this.isLoaded   = false;
+    try { this.sampler?.dispose(); } catch (_) { }
+    try { this.reverb?.dispose(); } catch (_) { }
+    try { this.masterVol?.dispose(); } catch (_) { }
+    this.sampler = null;
+    this.reverb = null;
+    this.masterVol = null;
+    this.isLoaded = false;
     this.currentSoundId = null;
-    this.currentConfig  = null;
+    this.currentConfig = null;
   }
 
   /** Full shutdown — call on page unload */
@@ -267,7 +267,7 @@ class AudioEngine {
     try {
       Tone.getTransport().stop();
       Tone.getContext().dispose();
-    } catch (_) {}
+    } catch (_) { }
   }
 
   private get isReady() {
@@ -276,9 +276,9 @@ class AudioEngine {
 
   get status() {
     return {
-      isLoaded:       this.isLoaded,
-      isLoading:      this.isLoading,
-      error:          this.loadError,
+      isLoaded: this.isLoaded,
+      isLoading: this.isLoading,
+      error: this.loadError,
       currentSoundId: this.currentSoundId,
     };
   }

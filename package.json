@@ -48,17 +48,9 @@
     ],
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
+        { "target": "portable", "arch": ["x64"] }
       ],
       "icon": "public/256.png"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerIcon": "public/256.png",
-      "uninstallerIcon": "public/256.png",
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
     }
   }
 }
