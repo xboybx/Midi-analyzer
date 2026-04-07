@@ -25,7 +25,7 @@ export const metadata: Metadata = {
       { url: "/512.png", sizes: "512x512" },
     ],
   },
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
