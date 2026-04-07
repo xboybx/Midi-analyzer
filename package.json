@@ -50,13 +50,13 @@
       "target": [
         { "target": "nsis", "arch": ["x64"] }
       ],
-      "icon": "public/126.png"
+      "icon": "public/256.png"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "installerIcon": "public/126.png",
-      "uninstallerIcon": "public/126.png",
+      "installerIcon": "public/256.png",
+      "uninstallerIcon": "public/256.png",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     }

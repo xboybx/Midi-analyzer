@@ -12,7 +12,7 @@ function createWindow() {
     minWidth:  1024,
     minHeight: 640,
     title:     'MIDI Chord Finder',
-    icon:      path.join(__dirname, '../public/512.png'),
+    icon:      path.join(__dirname, '../public/256.png'),
     backgroundColor: '#ffffff',
     show: false,  // prevent white flash before content loads
     webPreferences: {
