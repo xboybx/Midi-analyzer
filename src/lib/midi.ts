@@ -33,25 +33,27 @@ export function useMidi(callbacks?: MidiCallbacks) {
     const isSustain = command === 0x0B && data1 === 64;
 
     if (isNoteOn) {
+      // Fire audio FIRST — before any React scheduling overhead
+      cbRef.current?.onNoteOn?.(data1, data2 / 127);
       setActiveNotes(prev => {
         const next = new Map(prev);
         next.set(data1, { midi: data1, name: getNoteName(data1), velocity: data2 });
         return next;
       });
-      cbRef.current?.onNoteOn?.(data1, data2 / 127);
 
     } else if (isNoteOff) {
+      // Fire audio FIRST — before any React scheduling overhead
+      cbRef.current?.onNoteOff?.(data1);
       setActiveNotes(prev => {
         const next = new Map(prev);
         next.delete(data1);
         return next;
       });
-      cbRef.current?.onNoteOff?.(data1);
 
     } else if (isSustain) {
       const active = data2 >= 64;
-      setSustainActive(active);
       cbRef.current?.onSustain?.(active);
+      setSustainActive(active);
     }
   }, []);
 
@@ -68,7 +70,8 @@ export function useMidi(callbacks?: MidiCallbacks) {
         midiAccess = access;
 
         const attach = (input: any) => {
-          input.addEventListener('midimessage', onMIDIMessage);
+          // Use only addEventListener — DO NOT also set onmidimessage.
+          // Setting both causes every MIDI message to fire the handler TWICE.
           input.onmidimessage = onMIDIMessage;
         };
 
@@ -95,7 +98,6 @@ export function useMidi(callbacks?: MidiCallbacks) {
     return () => {
       if (midiAccess) {
         (Array.from(midiAccess.inputs.values()) as any[]).forEach((input: any) => {
-          input.removeEventListener('midimessage', onMIDIMessage);
           input.onmidimessage = null;
         });
       }

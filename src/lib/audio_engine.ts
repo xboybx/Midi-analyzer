@@ -1,5 +1,12 @@
 import * as Tone from "tone";
 
+// Pre-compute all MIDI note names once at module load.
+// This avoids calling Tone.Frequency().toNote() on the hot MIDI path,
+// which allocates objects and runs string parsing on every key press.
+const MIDI_NOTE_CACHE: string[] = Array.from({ length: 128 }, (_, i) =>
+  Tone.Frequency(i, "midi").toNote()
+);
+
 export type PianoSoundId = "grand" | "clarinet";
 
 export interface PianoSoundOption {
@@ -67,19 +74,19 @@ interface InstrumentConfig {
 
 const CONFIGS: Record<PianoSoundId, InstrumentConfig> = {
   grand: {
-    samplerAttack:  0.005,  // nearly instant hammer strike
+    samplerAttack:  0,      // true hammer-strike: no fade-in at all
     samplerRelease: 0.8,    // natural damper fall
     pedalRelease:   2.0,    // strings ring very long when pedal lifts
     reverbDecay:    2.5,    // concert-hall tail
-    reverbWet:      0.28,
+    reverbWet:      0.22,
     volumeDb:       -3,
   },
   clarinet: {
-    samplerAttack:  0.03,   // breath takes a moment
+    samplerAttack:  0.02,   // breath takes a moment
     samplerRelease: 0.12,   // wind instrument cuts off quickly
     pedalRelease:   0.25,   // sustain pedal on clarinet is barely noticeable
     reverbDecay:    1.2,    // small room / studio
-    reverbWet:      0.18,
+    reverbWet:      0.15,
     volumeDb:       -5,
   },
 };
@@ -87,9 +94,9 @@ const CONFIGS: Record<PianoSoundId, InstrumentConfig> = {
 // ─── Engine ─────────────────────────────────────────────────────────────────
 
 class AudioEngine {
-  private sampler:    Tone.Sampler | null             = null;
-  private reverb:     Tone.Reverb  | null             = null;
-  private masterVol:  Tone.Volume  | null             = null;
+  private sampler:    Tone.Sampler   | null = null;
+  private reverb:     Tone.Freeverb  | null = null;  // algorithmic — zero latency
+  private masterVol:  Tone.Volume    | null = null;
 
   private isLoaded = false;
   private isLoading = false;
@@ -117,15 +124,34 @@ class AudioEngine {
     const config = CONFIGS[soundId];
 
     try {
+      // Set up a low-latency AudioContext BEFORE starting Tone.
+      // latencyHint:'playback' asks Chrome/Edge for the smallest possible
+      // hardware buffer (typically 128 samples = ~3 ms at 44.1 kHz).
+      if (Tone.getContext().state !== "running") {
+        const ctx = new AudioContext({ latencyHint: "playback", sampleRate: 44100 });
+        Tone.setContext(ctx);
+      }
       await Tone.start();
 
-      // Build the signal chain: Sampler → Reverb → Volume → Destination
+      // ─── CRITICAL: Crush Tone.js's built-in scheduler delay ──────────────
+      // By default Tone schedules ALL audio events 100 ms in the future
+      // (lookAhead=0.1) so its JS scheduler has time to run. This is the
+      // dominant source of perceived latency for live MIDI playing.
+      // Setting lookAhead=0.01 (10 ms) keeps glitch protection while
+      // removing ~90 ms of intentional delay. updateInterval must be ≤ lookAhead.
+      const toneCtx = Tone.getContext() as unknown as Tone.Context;
+      toneCtx.lookAhead    = 0.01;   // 10 ms — was 100 ms
+      toneCtx.updateInterval = 0.01; // scheduler ticks every 10 ms — was 50 ms
+
+      // Build the signal chain: Sampler → Freeverb → Volume → Destination
+      // Freeverb is algorithmic (Schroeder/Moorer) — NO convolution IR,
+      // so it adds ZERO look-ahead / block latency unlike Tone.Reverb.
       this.masterVol = new Tone.Volume(config.volumeDb).toDestination();
-      this.reverb    = new Tone.Reverb({
-        decay: config.reverbDecay,
-        wet:   config.reverbWet,
+      this.reverb = new Tone.Freeverb({
+        roomSize:  Math.min(0.9, config.reverbDecay / 3.5),  // map decay → roomSize 0–0.9
+        dampening: 3000,
+        wet:       config.reverbWet,
       });
-      await this.reverb.generate();   // pre-render the IR
       this.reverb.connect(this.masterVol);
 
       return await new Promise(resolve => {
@@ -142,8 +168,8 @@ class AudioEngine {
           onload: () => {
             clearTimeout(timeout);
             this.sampler!.connect(this.reverb!);
-            this.isLoaded      = true;
-            this.isLoading     = false;
+            this.isLoaded       = true;
+            this.isLoading      = false;
             this.currentSoundId = soundId;
             this.currentConfig  = config;
             resolve({ success: true });
@@ -156,7 +182,6 @@ class AudioEngine {
             resolve({ success: false, error: msg });
           },
         });
-        // NOTE: sampler routes to reverb, NOT directly to destination
       });
     } catch (err: any) {
       this.isLoading = false;
@@ -171,8 +196,10 @@ class AudioEngine {
     this.activeNotes.add(midi);
 
     try {
-      const note = Tone.Frequency(midi, "midi").toNote();
+      const note = MIDI_NOTE_CACHE[midi] ?? Tone.Frequency(midi, "midi").toNote();
       const vel  = Math.max(0.01, Math.min(1, velocity));
+      // Tone.now() is correct here: after zeroing lookAhead it schedules
+      // events at the current audio clock — effectively immediate.
       this.sampler!.triggerAttack(note, Tone.now(), vel);
     } catch (_) {}
   }
@@ -216,8 +243,8 @@ class AudioEngine {
 
   private _releaseNote(midi: number) {
     try {
-      const note = Tone.Frequency(midi, "midi").toNote();
-      this.sampler?.triggerRelease(note);
+      const note = MIDI_NOTE_CACHE[midi] ?? Tone.Frequency(midi, "midi").toNote();
+      this.sampler?.triggerRelease(note, Tone.now());
     } catch (_) {}
   }
 
@@ -226,10 +253,10 @@ class AudioEngine {
     try { this.sampler?.dispose(); }   catch (_) {}
     try { this.reverb?.dispose(); }    catch (_) {}
     try { this.masterVol?.dispose(); } catch (_) {}
-    this.sampler   = null;
-    this.reverb    = null;
-    this.masterVol = null;
-    this.isLoaded  = false;
+    this.sampler    = null;
+    this.reverb     = null;
+    this.masterVol  = null;
+    this.isLoaded   = false;
     this.currentSoundId = null;
     this.currentConfig  = null;
   }
